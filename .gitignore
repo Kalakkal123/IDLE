@@ -1,0 +1,17 @@
+## Build outputs
+**/bin/
+**/obj/
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Web / Node (optional)
+node_modules/
+dist/
+.parcel-cache/
+.eslintcache
+.vite/
