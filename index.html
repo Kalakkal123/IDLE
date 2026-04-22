@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Idle Business Tycoon (Web Prototype)</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script type="module" src="script.js"></script>
+    <script>
+      // Basic boot check so failures show up even when module imports fail (CDN offline, file://, no server, etc).
+      setTimeout(() => {
+        if (window.__IBT_BOOTED) return;
+        const status = document.getElementById("statusLine");
+        if (status) {
+          status.textContent = "Failed to load game. Run a local server (http://localhost:8080) and ensure internet access for Three.js CDN.";
+        }
+      }, 2000);
+    </script>
+    <style>
+      /* Modern Tycoon UI Styling Overrides */
+      body {
+        background-color: #0f172a;
+        color: #f1f5f9;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .topbar {
+        background: linear-gradient(to right, #1e293b, #0f172a);
+        border-bottom: 3px solid #334155;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      }
+      .brand__title {
+        color: #fbbf24;
+        text-transform: uppercase;
+        font-weight: 900;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+      }
+      .chip {
+        background: #334155;
+        border: 2px solid #475569;
+        border-radius: 20px;
+        padding: 5px 12px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        font-weight: bold;
+      }
+      .card {
+        background: #1e293b;
+        border-radius: 16px;
+        border: 1px solid #334155;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        padding: 16px;
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+      }
+      .card__title {
+        color: #38bdf8;
+        border-bottom: 2px solid #334155;
+        padding-bottom: 10px;
+        margin-bottom: 16px;
+        font-size: 1.25rem;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+      .btn {
+        background: linear-gradient(to bottom, #3b82f6, #2563eb);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-weight: 800;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        cursor: pointer;
+        transition: all 0.1s ease-in-out;
+      }
+      .btn:hover {
+        background: linear-gradient(to bottom, #60a5fa, #3b82f6);
+        transform: scale(1.02);
+      }
+      .btn:active {
+        transform: scale(0.98);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      }
+      .btn:disabled {
+        background: #475569;
+        color: #94a3b8;
+        box-shadow: none;
+        cursor: not-allowed;
+        transform: none;
+      }
+      .stat {
+        background: #0f172a;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid #334155;
+      }
+      .stat__label {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+      .stat__value {
+        color: #fbbf24;
+        font-size: 1.4rem;
+        font-weight: 900;
+      }
+      .botrow {
+        background: #0f172a;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-left: 4px solid #3b82f6;
+      }
+      .pill {
+        background: #334155;
+        color: #f1f5f9;
+        border-radius: 12px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+      .toasts .toast {
+        background: #22c55e;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">Idle Business Tycoon</div>
+        <div class="brand__subtitle">Web Prototype</div>
+      </div>
+      <div class="topbar__stats">
+        <div class="chip"><span class="chip__k">💰</span><span id="chipMoney">--</span></div>
+        <div class="chip"><span class="chip__k">💎</span><span id="chipGems">--</span></div>
+        <div class="chip"><span class="chip__k">🪙</span><span id="chipGold">--</span></div>
+        <div class="chip"><span class="chip__k">🤖</span><span id="chipBots">--</span></div>
+        <div class="chip"><span class="chip__k">🚢</span><span id="chipShip">--</span></div>
+        <div class="chip"><span class="chip__k">📦</span><span id="chipStorage">--</span></div>
+      </div>
+      <div class="topbar__actions">
+        <button id="btnPause" class="btn btn--ghost" type="button">Pause</button>
+        <button id="btnReset" class="btn btn--danger" type="button" title="Clears local save and resets the run">
+          Restart
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel panel--left">
+        <div class="card">
+          <h2 class="card__title">Economy</h2>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat__label">Money 💰</div>
+              <div id="moneyTotal" class="stat__value">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Workers 🤖</div>
+              <div id="botCount" class="stat__value">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card__title">Actions</h2>
+          <div class="upgrades">
+            <button id="buyBot" class="btn btn--tycoon btn--blue" type="button">
+              <span class="btn__icon">🤖</span>
+              <div class="btn__text">
+                <div class="btn__title">Buy Worker</div>
+                <div class="btn__meta" id="buyBotCost">$500</div>
+              </div>
+            </button>
+            <button id="buyShip" class="btn btn--tycoon btn--green" type="button">
+              <span class="btn__icon">🚢</span>
+              <div class="btn__text">
+                <div class="btn__title">Buy Ship</div>
+                <div class="btn__meta" id="buyShipCost">$5,000</div>
+              </div>
+            </button>
+            <button id="upgradeShip" class="btn btn--tycoon btn--purple" type="button">
+              <span class="btn__icon">📦</span>
+              <div class="btn__text">
+                <div class="btn__title">Upgrade Cap</div>
+                <div class="btn__meta" id="upgradeShipCost">$2,000</div>
+              </div>
+            </button>
+          </div>
+          <p class="hint">Workers cap at 35. Ship upgrades max out at level 10.</p>
+        </div>
+
+        <div class="card">
+          <h2 class="card__title">Extras</h2>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat__label">Gems 💎</div>
+              <div id="gemsTotal" class="stat__value">0</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Gold 🪙</div>
+              <div id="goldTotal" class="stat__value">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card__title">Gold Mine</h2>
+          <div class="upgrades">
+            <button id="unlockMine" class="btn btn--default" type="button">
+              Unlock Mine <span class="btn__meta" id="unlockMineCost">(5 gems)</span>
+            </button>
+            <button id="boostEfficiency" class="btn btn--default" type="button">
+              Boost Efficiency <span class="btn__meta" id="boostEfficiencyCost">(2 gems)</span>
+            </button>
+            <button id="sellGold" class="btn btn--default" type="button">
+              Sell Gold <span class="btn__meta" id="sellGoldMeta">($120 each)</span>
+            </button>
+          </div>
+          <div style="margin-top: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span class="stat__label">Mine Workers: <span id="mineAllocationLabel" style="color: #fbbf24; font-weight: bold; font-size: 1.1rem;">0</span></span>
+            </div>
+            <input type="range" id="mineSlider" min="0" max="15" value="0" style="width: 100%; cursor: pointer;" />
+          <div id="mineStatus" class="hint">Locked. Requires 5 bots.</div>
+        </div>
+
+        <div class="card">
+          <h2 class="card__title">Factory (Goods)</h2>
+          <div class="upgrades">
+            <button id="unlockGoods" class="btn btn--default" type="button">
+              Unlock Goods <span class="btn__meta" id="unlockGoodsCost">($20,000)</span>
+            </button>
+          </div>
+          <div id="goodsPanel" style="display: none; margin-top: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span class="stat__label">Goods Workers: <span id="goodsAllocationLabel" style="color: #fbbf24; font-weight: bold; font-size: 1.1rem;">0</span></span>
+            </div>
+            <input type="range" id="goodsSlider" min="0" max="10" value="0" style="width: 100%; cursor: pointer; margin-bottom: 12px;" />
+            <div style="display: flex; gap: 8px;">
+              <button id="goodsTypeWood" class="btn btn--blue" style="flex: 1;">Wood</button>
+              <button id="goodsTypeStone" class="btn btn--ghost" style="flex: 1;">Stone</button>
+            </div>
+          </div>
+          <div id="goodsStatus" class="hint">Locked. Requires $20,000.</div>
+        </div>
+
+        <div class="card">
+          <h2 class="card__title">Port Storage</h2>
+          <div class="stats">
+            <div class="stat">
+              <div class="stat__label">Wood <button id="toggleWood" class="pill" style="margin-left: 6px; cursor: pointer; border: none; background: #22c55e;">ON</button></div>
+              <div id="portWood" class="stat__value">0</div>
+              <div id="portGoodsWood" class="stat__label" style="color: #fb923c; margin-top: 4px;">0 Processed</div>
+            </div>
+            <div class="stat">
+              <div class="stat__label">Stone <button id="toggleStone" class="pill" style="margin-left: 6px; cursor: pointer; border: none; background: #22c55e;">ON</button></div>
+              <div id="portStone" class="stat__value">0</div>
+              <div id="portGoodsStone" class="stat__label" style="color: #fb923c; margin-top: 4px;">0 Processed</div>
+            </div>
+          </div>
+          <p class="hint">Workers deposit here. The ship loads from this storage, then sells on return.</p>
+        </div>
+
+        <div class="card">
+          <h2 class="card__title">Ship</h2>
+          <div class="botlist">
+            <div class="botrow">
+              <div class="botrow__top">
+                <div id="shipState">Loading</div>
+                <span class="pill"
+                  ><span class="dot" style="background: #7dd3fc"></span><span id="shipTimer">--:--</span></span
+                >
+              </div>
+              <div id="shipLoad">Load: 0 / 10</div>
+              <div id="shipMeta" class="hint">Level: 1 - Capacity: 10</div>
+              <div id="priceHint" class="hint">Prices: Wood $10 - Stone $16</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--main">
+        <div class="stage">
+          <div id="stage3d" class="stage3d" aria-label="3D scene"></div>
+        </div>
+        <div class="footer">
+          <div class="footer__kbd">
+            <span class="kbd">Click</span> to place the Port - <span class="kbd">Shift+Click</span> to plant a Tree -
+            <span class="kbd">Alt+Click</span> to place Stone
+          </div>
+          <div id="statusLine" class="footer__status">Running</div>
+        </div>
+      </section>
+    </main>
+
+    <div id="factoryBar" style="display: none; position: absolute; width: 60px; height: 10px; background: #333; border: 2px solid #000; z-index: 50; border-radius: 4px; overflow: hidden;">
+       <div id="factoryBarInner" style="width: 0%; height: 100%; background: #22c55e;"></div>
+    </div>
+
+    <div id="toasts" class="toasts" aria-live="polite" aria-relevant="additions"></div>
+  </body>
+</html>
